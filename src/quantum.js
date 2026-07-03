@@ -45,10 +45,7 @@ export const AXIS_LABELS = {
   },
 };
 
-export function complex(re = 0, im = 0) {
-  return { re, im };
-}
-
+export function complex(re = 0, im = 0) { return { re, im }; }
 export const add = (z1, z2) => complex(z1.re + z2.re, z1.im + z2.im);
 export const sub = (z1, z2) => complex(z1.re - z2.re, z1.im - z2.im);
 export const mul = (z1, z2) => complex(z1.re * z2.re - z1.im * z2.im, z1.re * z2.im + z1.im * z2.re);
@@ -57,9 +54,7 @@ export const abs2 = (z) => z.re * z.re + z.im * z.im;
 export const phase = (z) => (abs2(z) < 1e-30 ? null : Math.atan2(z.im, z.re));
 export const expI = (phi) => complex(Math.cos(phi), Math.sin(phi));
 
-export function basisIndex(label) {
-  return BASIS.indexOf(label);
-}
+export function basisIndex(label) { return BASIS.indexOf(label); }
 
 export function initialState(label) {
   const index = basisIndex(label);
@@ -81,15 +76,10 @@ export function pairRotation(state, source, target, theta, phi) {
 }
 
 export function applyGates(state, gates) {
-  return gates.reduce(
-    (current, gate) => pairRotation(current, gate.source, gate.target, gate.theta, gate.phi),
-    state.map((z) => complex(z.re, z.im)),
-  );
+  return gates.reduce((current, gate) => pairRotation(current, gate.source, gate.target, gate.theta, gate.phi), state.map((z) => complex(z.re, z.im)));
 }
 
-export function probabilities(state) {
-  return Object.fromEntries(BASIS.map((label, i) => [label, abs2(state[i])]));
-}
+export function probabilities(state) { return Object.fromEntries(BASIS.map((label, i) => [label, abs2(state[i])])); }
 
 export function rankComponents(values) {
   return BASIS.map((label, index) => ({ label, index, value: values[label] }))
@@ -97,38 +87,28 @@ export function rankComponents(values) {
     .map(({ label }) => label);
 }
 
-export function phases(state) {
-  return Object.fromEntries(BASIS.map((label, i) => [label, phase(state[i])]));
-}
+export function phases(state) { return Object.fromEntries(BASIS.map((label, i) => [label, phase(state[i])])); }
+
+function wrapPhase(value) { return Math.atan2(Math.sin(value), Math.cos(value)); }
 
 export function relativePhases(state) {
   const componentPhases = phases(state);
   const result = {};
-  for (let i = 0; i < BASIS.length; i += 1) {
-    for (let j = i + 1; j < BASIS.length; j += 1) {
-      const left = componentPhases[BASIS[i]];
-      const right = componentPhases[BASIS[j]];
-      result[`${BASIS[i]}-${BASIS[j]}`] = left === null || right === null ? null : wrapPhase(left - right);
-    }
+  for (let i = 0; i < BASIS.length; i += 1) for (let j = i + 1; j < BASIS.length; j += 1) {
+    const left = componentPhases[BASIS[i]];
+    const right = componentPhases[BASIS[j]];
+    result[`${BASIS[i]}-${BASIS[j]}`] = left === null || right === null ? null : wrapPhase(left - right);
   }
   return result;
-}
-
-function wrapPhase(value) {
-  return Math.atan2(Math.sin(value), Math.cos(value));
 }
 
 export function alignmentScores(state) {
   const componentPhases = phases(state);
   const magnitudes = state.map((z) => Math.sqrt(abs2(z)));
   const result = {};
-  for (let i = 0; i < BASIS.length; i += 1) {
-    for (let j = i + 1; j < BASIS.length; j += 1) {
-      const key = `${BASIS[i]}-${BASIS[j]}`;
-      result[key] = componentPhases[BASIS[i]] === null || componentPhases[BASIS[j]] === null
-        ? 0
-        : magnitudes[i] * magnitudes[j] * Math.cos(componentPhases[BASIS[i]] - componentPhases[BASIS[j]]);
-    }
+  for (let i = 0; i < BASIS.length; i += 1) for (let j = i + 1; j < BASIS.length; j += 1) {
+    const key = `${BASIS[i]}-${BASIS[j]}`;
+    result[key] = componentPhases[BASIS[i]] === null || componentPhases[BASIS[j]] === null ? 0 : magnitudes[i] * magnitudes[j] * Math.cos(componentPhases[BASIS[i]] - componentPhases[BASIS[j]]);
   }
   return result;
 }
@@ -150,10 +130,7 @@ export function sampleCounts(values, shots, seed) {
   const random = mulberry32(Number.isInteger(seed) ? seed : 0);
   const cumulative = [];
   let sum = 0;
-  for (const label of BASIS) {
-    sum += values[label];
-    cumulative.push(sum);
-  }
+  for (const label of BASIS) { sum += values[label]; cumulative.push(sum); }
   for (let shot = 0; shot < shots; shot += 1) {
     const draw = random();
     const index = cumulative.findIndex((limit) => draw < limit);
@@ -162,235 +139,17 @@ export function sampleCounts(values, shots, seed) {
   return counts;
 }
 
-export function traceGateEffects(startState, gates) {
-  const trace = [];
-  let state = startState.map((z) => complex(z.re, z.im));
-  gates.forEach((gate, index) => {
-    const before = probabilities(state);
-    state = pairRotation(state, gate.source, gate.target, gate.theta, gate.phi);
-    const after = probabilities(state);
-    trace.push({
-      step: index + 1,
-      gate: gate.name,
-      source: gate.source,
-      target: gate.target,
-      before,
-      after,
-      time_entropy_after: analyzeEntanglement12(state).axis_entropies_bits.time,
-      delta: Object.fromEntries(BASIS.map((label) => [label, after[label] - before[label]])),
-    });
-  });
-  return trace;
-}
-
-function measureWithGates(config, gates) {
-  const state = applyGates(initialState(config.initial), gates);
-  const values = probabilities(state);
-  const ranking = rankComponents(values);
-  return { state, probabilities: values, ranking, primary: ranking[0], secondary: ranking[1] };
-}
-
-function maxProbabilityDelta(left, right) {
-  return Math.max(...BASIS.map((label) => Math.abs(left[label] - right[label])));
-}
-
-function sensitivity(delta) {
-  if (delta < 0.1) return "LOW";
-  if (delta < 0.3) return "MEDIUM";
-  return "HIGH";
-}
-
-function rankingMatchesExpected(observed, expected) {
-  return expected.length > 0
-    ? expected.every((label, index) => observed[index] === label)
-    : null;
-}
-
-function top3SetMatches(observed, expected) {
-  if (expected.length < 3) return null;
-  const expectedTop3 = new Set(expected.slice(0, 3));
-  return observed.slice(0, 3).every((label) => expectedTop3.has(label));
-}
-
-function probabilitiesFromCounts(counts, shots) {
-  if (!counts || !Number.isInteger(shots) || shots <= 0) return null;
-  return Object.fromEntries(BASIS.map((label) => [label, counts[label] / shots]));
-}
-
-function summarizeSourceText(sourceText, maxLength = 320) {
-  if (typeof sourceText !== "string") return "";
-  const compact = sourceText.replace(/\s+/g, " ").trim();
-  return compact.length <= maxLength ? compact : `${compact.slice(0, maxLength)}…`;
-}
-
-export function runGateAblation(config) {
-  const baseline = measureWithGates(config, config.gates);
-  return config.gates.map((gate, removedIndex) => {
-    const measured = measureWithGates(config, config.gates.filter((_, index) => index !== removedIndex));
-    const l1Difference = BASIS.reduce(
-      (sum, label) => sum + Math.abs(measured.probabilities[label] - baseline.probabilities[label]),
-      0,
-    );
-    return {
-      removed_index: removedIndex,
-      removed_gate: gate.name,
-      primary: measured.primary,
-      secondary: measured.secondary,
-      probabilities: measured.probabilities,
-      time_entropy: analyzeEntanglement12(measured.state).axis_entropies_bits.time,
-      l1_difference: l1Difference,
-    };
-  });
-}
-
-export function runOrderSensitivity(config) {
-  const baseline = measureWithGates(config, config.gates);
-  return config.gates.slice(0, -1).map((gate, index) => {
-    const swapped = config.gates.slice();
-    [swapped[index], swapped[index + 1]] = [swapped[index + 1], swapped[index]];
-    const measured = measureWithGates(config, swapped);
-    const delta = maxProbabilityDelta(measured.probabilities, baseline.probabilities);
-    return {
-      swap_steps: [index + 1, index + 2],
-      swapped_gates: [gate.name, config.gates[index + 1].name],
-      primary: measured.primary,
-      secondary: measured.secondary,
-      probabilities: measured.probabilities,
-      max_probability_delta: delta,
-      sensitivity: sensitivity(delta),
-    };
-  });
-}
-
-export function runPhaseSensitivity(config) {
-  const baseline = measureWithGates(config, config.gates);
-  const testedPhases = [0, Math.PI / 2, Math.PI];
-  return config.gates.flatMap((gate, gateIndex) => testedPhases.map((testedPhi) => {
-    const changed = config.gates.map((item, index) => index === gateIndex ? { ...item, phi: testedPhi } : item);
-    const measured = measureWithGates(config, changed);
-    const delta = maxProbabilityDelta(measured.probabilities, baseline.probabilities);
-    return {
-      gate_index: gateIndex,
-      gate: gate.name,
-      original_phi: gate.phi,
-      tested_phi: testedPhi,
-      primary: measured.primary,
-      secondary: measured.secondary,
-      probabilities: measured.probabilities,
-      max_probability_delta: delta,
-      sensitivity: sensitivity(delta),
-    };
-  }));
-}
-
-export function validateConfig(config) {
-  if (!config || typeof config !== "object" || Array.isArray(config)) throw new Error("config はJSONオブジェクトにしてください。");
-  const legacyLabels = new Set(["a", "b", "c", "d"]);
-  const labels = [config.initial, ...(config.gates ?? []).flatMap((gate) => [gate.source, gate.target])];
-  if (labels.some((label) => legacyLabels.has(label))) throw new Error("この config は2ビット形式です。このリポジトリは12T専用です。");
-  const labelFields = [config.initial, ...labels, ...Object.keys(config.component_meanings ?? {}), ...(config.expected_reading?.ranking ?? [])];
-  const usesOnly3qLabels = labelFields.some(Boolean)
-    && labelFields.every((label) => typeof label !== "string" || /^(a|b|c|d)[01]$/.test(label));
-  if (usesOnly3qLabels && !labelFields.some((label) => typeof label === "string" && /^(a|b|c|d)2$/.test(label))) {
-    throw new Error("これは3q(8状態)形式です。12t では時間相が3値(0=過去/1=現在/2=未来)です。");
-  }
-  if (config.schema_version !== "12t-1.0") throw new Error('schema_version は "12t-1.0" にしてください。');
-  if (basisIndex(config.initial) < 0) throw new Error("initial は12T基底ラベルにしてください。");
-  if (!Array.isArray(config.gates) || config.gates.length === 0) throw new Error("gates が空です。");
-  if (config.shots !== undefined && (!Number.isInteger(config.shots) || config.shots <= 0)) throw new Error("shots は正の整数にしてください。");
-  if (config.seed !== undefined && !Number.isInteger(config.seed)) throw new Error("seed は整数にしてください。");
-  config.gates.forEach((gate, index) => {
-    if (basisIndex(gate.source) < 0 || basisIndex(gate.target) < 0) throw new Error(`gate ${index + 1} の source/target は12T基底ラベルにしてください。`);
-    if (gate.source === gate.target) throw new Error(`gate ${index + 1} の source と target は異なる成分にしてください。`);
-    if (![gate.theta, gate.phi, gate.strength].every(Number.isFinite)) throw new Error(`gate ${index + 1} の theta/phi/strength は数値にしてください。`);
-  });
-  const ranking = config.expected_reading?.ranking;
-  if (ranking !== undefined && (!Array.isArray(ranking) || ranking.length !== BASIS.length || new Set(ranking).size !== BASIS.length || ranking.some((label) => basisIndex(label) < 0))) {
-    throw new Error("expected_reading.ranking は12ラベルの全順位にしてください。");
-  }
-  if (config.component_meanings !== undefined && (typeof config.component_meanings !== "object" || BASIS.some((label) => typeof config.component_meanings[label] !== "string"))) {
-    throw new Error("component_meanings は12ラベル全ての文字列を含めてください。");
-  }
-  return true;
-}
-
-export function makeAiInterpretationJson(result, audit = {}) {
-  const diagnosticSections = {
-    gate_trace: Array.isArray(audit.gate_trace) ? audit.gate_trace : null,
-    ablation: Array.isArray(audit.ablation) ? audit.ablation : null,
-    order_sensitivity: Array.isArray(audit.order_sensitivity) ? audit.order_sensitivity : null,
-    phase_sensitivity: Array.isArray(audit.phase_sensitivity) ? audit.phase_sensitivity : null,
-    gate_resonance: Array.isArray(audit.gate_resonance) ? audit.gate_resonance : null,
-    gate_flow: Array.isArray(audit.gate_flow) ? audit.gate_flow : null,
-  };
-  const sectionsPresent = Object.fromEntries(
-    Object.entries(diagnosticSections).map(([key, value]) => [key, value !== null]),
-  );
-  return {
-    input_type: "measurement_result",
-    schema_version: "ai_interpretation_12t_v1",
-    name: result.name,
-    description: result.description,
-    mode_profile: result.mode_profile,
-    source_text_summary: result.source_text_summary ?? "",
-    component_meanings: result.component_meanings ?? {},
-    life_question: result.life_question,
-    expected_reading_full: result.expected_reading_full,
-    gates_summary: result.gates_summary,
-    gate_resonance: Array.isArray(audit.gate_resonance) ? audit.gate_resonance : null,
-    gate_flow: Array.isArray(audit.gate_flow) ? audit.gate_flow : null,
-    encoding_health: audit.encoding_health ?? null,
-    tensor_structure: result.tensor_structure,
-    entanglement12: result.entanglement12,
-    projected_2bit: result.projected_2bit,
-    classical_controls: result.classical_controls,
-    probability_source: result.probability_source,
-    count_source: result.count_source,
-    shots: result.shots,
-    seed: result.seed,
-    probabilities: result.probabilities,
-    sampled_counts: result.sampled_counts,
-    sampled_probabilities: result.sampled_probabilities,
-    observed_ranking_from_probabilities: result.observed_ranking_from_probabilities,
-    observed_ranking_from_counts: result.observed_ranking_from_counts,
-    expected_ranking: result.expected_ranking,
-    ranking_match_expected_from_probabilities: result.ranking_match_expected_from_probabilities,
-    ranking_match_expected_from_counts: result.ranking_match_expected_from_counts,
-    ranking_match_top3: result.ranking_match_top3,
-    sections_present: sectionsPresent,
-    ...Object.fromEntries(Object.entries(diagnosticSections).filter(([, value]) => value !== null)),
-    anti_hallucination_instructions: [
-      "Do not invent probabilities, counts, rankings, L1 distances, gate effects, or sensitivities.",
-      "Use only values present in this JSON.",
-      "expected_ranking is a hypothesis, not an observed result.",
-      "probabilities and sampled_probabilities are different fields.",
-      "If a section is absent, say 入力なし.",
-      "binding_label / axis_entropies_bits / time_populations / presence_spectrum / projected_2bit はサイトが計算した値である。再計算・再分類しない。",
-      "phase_dependence_level / interference_gap_level はサイトの閾値判定であり、AIが独自の閾値で再判定しない。",
-      "phase_dependence と interference_gap が両方 LOW の場合、『この物語の量子的構造(位相・干渉)は結果に寄与していない』と明示的に述べること。",
-      "gate_resonance の resonance_label と resonance_ratio はサイトが計算した値である。AIが即時効果と反実仮想重みから独自にラベルを再判定しない。",
-      "gates_summary の meaning と phi_label はエンコーダとサイトが付与した意味情報である。存在しないゲートや意味を創作しない。",
-      "gate_flow の flag と encoding_health はサイトの判定である。NO_OP / SOURCE_EMPTY のゲートの meaning を根拠に構造的主張を組み立てない。",
-    ],
-    safety_notice: "この結果は霊的真実・医学的事実・人生診断を証明するものではなく、象徴回路の出力を自己理解のために読むものです。",
-  };
-}
-
 export function reducedDensityQubit(state, which) {
   const rho = [[complex(), complex()], [complex(), complex()]];
-  for (let i = 0; i < 12; i += 1) {
-    for (let j = 0; j < 12; j += 1) {
-      const di = digitsOf(i), dj = digitsOf(j);
-      const same = which === "subject"
-        ? di.q2 === dj.q2 && di.t3 === dj.t3
-        : di.q1 === dj.q1 && di.t3 === dj.t3;
-      if (!same) continue;
-      const x = which === "subject" ? di.q1 : di.q2;
-      const y = which === "subject" ? dj.q1 : dj.q2;
-      const re = state[i].re * state[j].re + state[i].im * state[j].im;
-      const im = state[i].im * state[j].re - state[i].re * state[j].im;
-      rho[x][y] = complex(rho[x][y].re + re, rho[x][y].im + im);
-    }
+  for (let i = 0; i < 12; i += 1) for (let j = 0; j < 12; j += 1) {
+    const di = digitsOf(i), dj = digitsOf(j);
+    const same = which === "subject" ? di.q2 === dj.q2 && di.t3 === dj.t3 : di.q1 === dj.q1 && di.t3 === dj.t3;
+    if (!same) continue;
+    const x = which === "subject" ? di.q1 : di.q2;
+    const y = which === "subject" ? dj.q1 : dj.q2;
+    const re = state[i].re * state[j].re + state[i].im * state[j].im;
+    const im = state[i].im * state[j].re - state[i].re * state[j].im;
+    rho[x][y] = complex(rho[x][y].re + re, rho[x][y].im + im);
   }
   return rho;
 }
@@ -440,16 +199,244 @@ export function analyzeEntanglement12(state) {
   const sManifestation = vnEntropy(eig2(rM));
   const sTime = vnEntropy(eig3Hermitian(rT));
   const LOG2_3 = Math.log2(3);
-  const bound = (sSubject + sManifestation + sTime / LOG2_3) / 3;
+  const axisBindingNormalized = { subject: sSubject, manifestation: sManifestation, time: sTime / LOG2_3 };
+  const bound = (axisBindingNormalized.subject + axisBindingNormalized.manifestation + axisBindingNormalized.time) / 3;
   const bindingLabel = bound < 0.1 ? "SEPARABLE_LIKE" : bound < 0.4 ? "WEAKLY_BOUND" : bound < 0.7 ? "STRONGLY_BOUND" : "NEAR_MAXIMAL_BOUND";
+  const deepestBoundAxis = Object.keys(axisBindingNormalized).reduce((a, b) => axisBindingNormalized[b] > axisBindingNormalized[a] ? b : a);
   return {
     axis_entropies_bits: { subject: sSubject, manifestation: sManifestation, time: sTime },
     axis_entropy_max: { subject: 1, manifestation: 1, time: LOG2_3 },
+    axis_binding_normalized: axisBindingNormalized,
+    deepest_bound_axis: deepestBoundAxis,
     binding_normalized: bound,
     binding_label: bindingLabel,
     time_populations: { past: rT[0][0].re, now: rT[1][1].re, future: rT[2][2].re },
     presence_spectrum: { past_now: 2 * Math.sqrt(abs2(rT[0][1])), now_future: 2 * Math.sqrt(abs2(rT[1][2])), past_future: 2 * Math.sqrt(abs2(rT[0][2])) },
     bloch_z: { subject: rS[0][0].re - rS[1][1].re, manifestation: rM[0][0].re - rM[1][1].re },
+  };
+}
+
+export function traceGateEffects(startState, gates) {
+  const trace = [];
+  let state = startState.map((z) => complex(z.re, z.im));
+  gates.forEach((gate, index) => {
+    const before = probabilities(state);
+    state = pairRotation(state, gate.source, gate.target, gate.theta, gate.phi);
+    const after = probabilities(state);
+    trace.push({
+      step: index + 1,
+      gate: gate.name,
+      source: gate.source,
+      target: gate.target,
+      before,
+      after,
+      time_entropy_after: analyzeEntanglement12(state).axis_entropies_bits.time,
+      delta: Object.fromEntries(BASIS.map((label) => [label, after[label] - before[label]])),
+    });
+  });
+  return trace;
+}
+
+function measureWithGates(config, gates) {
+  const state = applyGates(initialState(config.initial), gates);
+  const values = probabilities(state);
+  const ranking = rankComponents(values);
+  return { state, probabilities: values, ranking, primary: ranking[0], secondary: ranking[1] };
+}
+
+function maxProbabilityDelta(left, right) { return Math.max(...BASIS.map((label) => Math.abs(left[label] - right[label]))); }
+function sensitivity(delta) { if (delta < 0.1) return "LOW"; if (delta < 0.3) return "MEDIUM"; return "HIGH"; }
+function rankingMatchesExpected(observed, expected) { return expected.length > 0 ? expected.every((label, index) => observed[index] === label) : null; }
+function top3SetMatches(observed, expected) {
+  if (expected.length < 3) return null;
+  const expectedTop3 = new Set(expected.slice(0, 3));
+  return observed.slice(0, 3).every((label) => expectedTop3.has(label));
+}
+function probabilitiesFromCounts(counts, shots) { return !counts || !Number.isInteger(shots) || shots <= 0 ? null : Object.fromEntries(BASIS.map((label) => [label, counts[label] / shots])); }
+function summarizeSourceText(sourceText, maxLength = 320) {
+  if (typeof sourceText !== "string") return "";
+  const compact = sourceText.replace(/\s+/g, " ").trim();
+  return compact.length <= maxLength ? compact : `${compact.slice(0, maxLength)}…`;
+}
+
+export function runGateAblation(config) {
+  const baseline = measureWithGates(config, config.gates);
+  return config.gates.map((gate, removedIndex) => {
+    const measured = measureWithGates(config, config.gates.filter((_, index) => index !== removedIndex));
+    const l1Difference = BASIS.reduce((sum, label) => sum + Math.abs(measured.probabilities[label] - baseline.probabilities[label]), 0);
+    return { removed_index: removedIndex, removed_gate: gate.name, primary: measured.primary, secondary: measured.secondary, probabilities: measured.probabilities, time_entropy: analyzeEntanglement12(measured.state).axis_entropies_bits.time, l1_difference: l1Difference };
+  });
+}
+
+export function runOrderSensitivity(config) {
+  const baseline = measureWithGates(config, config.gates);
+  return config.gates.slice(0, -1).map((gate, index) => {
+    const swapped = config.gates.slice();
+    [swapped[index], swapped[index + 1]] = [swapped[index + 1], swapped[index]];
+    const measured = measureWithGates(config, swapped);
+    const delta = maxProbabilityDelta(measured.probabilities, baseline.probabilities);
+    return { swap_steps: [index + 1, index + 2], swapped_gates: [gate.name, config.gates[index + 1].name], primary: measured.primary, secondary: measured.secondary, probabilities: measured.probabilities, max_probability_delta: delta, sensitivity: sensitivity(delta) };
+  });
+}
+
+export function runPhaseSensitivity(config) {
+  const baseline = measureWithGates(config, config.gates);
+  const testedPhases = [0, Math.PI / 2, Math.PI];
+  return config.gates.flatMap((gate, gateIndex) => testedPhases.map((testedPhi) => {
+    const changed = config.gates.map((item, index) => index === gateIndex ? { ...item, phi: testedPhi } : item);
+    const measured = measureWithGates(config, changed);
+    const delta = maxProbabilityDelta(measured.probabilities, baseline.probabilities);
+    return { gate_index: gateIndex, gate: gate.name, original_phi: gate.phi, tested_phi: testedPhi, primary: measured.primary, secondary: measured.secondary, probabilities: measured.probabilities, max_probability_delta: delta, sensitivity: sensitivity(delta) };
+  }));
+}
+
+const correctSkeleton = '{"schema_version":"12t-1.0","mode_profile":"general","initial":"b0","component_meanings":{...12キー},"gates":[{"name":"G1","source":"b0","target":"a0","theta":1.2566,"phi":0,"strength":3,"meaning":"..."}],"expected_reading":{"ranking":[...12ラベル]}}';
+const withSkeleton = (message) => `${message}\n正しい最小骨格: ${correctSkeleton}`;
+
+function hasTopLevelShape(config) {
+  return config && typeof config === "object" && !Array.isArray(config) && config.initial !== undefined && Array.isArray(config.gates);
+}
+
+export function validateConfig(config) {
+  if (!config || typeof config !== "object" || Array.isArray(config)) throw new Error("config はJSONオブジェクトにしてください。");
+  const salvaged = salvageConfig(config);
+  if (salvaged.repairs.length > 0) {
+    for (const key of Object.keys(config)) delete config[key];
+    Object.assign(config, salvaged.config);
+    config.__salvage_repairs = salvaged.repairs;
+  }
+  if (!hasTopLevelShape(config)) {
+    const nested = Object.values(config).find((value) => value && typeof value === "object" && !Array.isArray(value) && value.initial !== undefined && Array.isArray(value.gates));
+    if (nested) throw new Error(withSkeleton("構造がテンプレートと異なります。initial・gates・component_meanings・expected_reading はトップレベルに直接置いてください。quantum_state_config などのラッパーで包まないでください。"));
+  }
+  if (Array.isArray(config.gates)) {
+    const parameterIndex = config.gates.findIndex((gate) => gate && typeof gate === "object" && gate.parameters && typeof gate.parameters === "object");
+    if (parameterIndex >= 0) throw new Error(withSkeleton(`ゲート ${parameterIndex + 1}: theta / phi / strength は parameters に入れず、ゲートオブジェクト直下に置いてください。`));
+    const stringNumberIndex = config.gates.findIndex((gate) => ["theta", "phi", "strength"].some((key) => typeof gate?.[key] === "string"));
+    if (stringNumberIndex >= 0) throw new Error(withSkeleton(`ゲート ${stringNumberIndex + 1}: theta / phi / strength は引用符なしの JSON 数値リテラルにしてください(例: "theta": 1.2566370614)。`));
+  }
+  const legacyLabels = new Set(["a", "b", "c", "d"]);
+  const labels = [config.initial, ...(config.gates ?? []).flatMap((gate) => [gate.source, gate.target])];
+  if (labels.some((label) => legacyLabels.has(label))) throw new Error("この config は2ビット形式です。このリポジトリは12T専用です。");
+  const labelFields = [config.initial, ...labels, ...Object.keys(config.component_meanings ?? {}), ...(config.expected_reading?.ranking ?? [])];
+  const usesOnly3qLabels = labelFields.some(Boolean) && labelFields.every((label) => typeof label !== "string" || /^(a|b|c|d)[01]$/.test(label));
+  if (usesOnly3qLabels && !labelFields.some((label) => typeof label === "string" && /^(a|b|c|d)2$/.test(label))) throw new Error("これは3q(8状態)形式です。12t では時間相が3値(0=過去/1=現在/2=未来)です。");
+  if (config.schema_version !== "12t-1.0") throw new Error('schema_version は "12t-1.0" にしてください。');
+  if (basisIndex(config.initial) < 0) throw new Error("initial は12T基底ラベルにしてください。");
+  if (!Array.isArray(config.gates) || config.gates.length === 0) throw new Error("gates が空です。");
+  if (config.shots !== undefined && (!Number.isInteger(config.shots) || config.shots <= 0)) throw new Error("shots は正の整数にしてください。");
+  if (config.seed !== undefined && !Number.isInteger(config.seed)) throw new Error("seed は整数にしてください。");
+  config.gates.forEach((gate, index) => {
+    if (!gate.name && gate.gate_id) gate.name = gate.gate_id;
+    if (basisIndex(gate.source) < 0 || basisIndex(gate.target) < 0) throw new Error(`gate ${index + 1} の source/target は12T基底ラベルにしてください。`);
+    if (gate.source === gate.target) throw new Error(`gate ${index + 1} の source と target は異なる成分にしてください。`);
+    if (![gate.theta, gate.phi, gate.strength].every(Number.isFinite)) throw new Error(`gate ${index + 1} の theta/phi/strength は数値にしてください。`);
+  });
+  const ranking = config.expected_reading?.ranking;
+  if (ranking !== undefined && (!Array.isArray(ranking) || ranking.length !== BASIS.length || new Set(ranking).size !== BASIS.length || ranking.some((label) => basisIndex(label) < 0))) throw new Error("expected_reading.ranking は12ラベルの全順位にしてください。");
+  if (config.component_meanings !== undefined && (typeof config.component_meanings !== "object" || BASIS.some((label) => typeof config.component_meanings[label] !== "string"))) throw new Error("component_meanings は12ラベル全ての文字列を含めてください。");
+  return true;
+}
+
+export function salvageConfig(raw) {
+  const repairs = [];
+  let cfg = raw && typeof raw === "object" && !Array.isArray(raw) ? { ...raw } : raw;
+  if (cfg && typeof cfg === "object" && !cfg.initial && !cfg.gates) {
+    for (const key of Object.keys(cfg)) {
+      const v = cfg[key];
+      if (v && typeof v === "object" && v.initial && Array.isArray(v.gates)) {
+        cfg = { ...cfg, ...v };
+        delete cfg[key];
+        repairs.push(`ラッパー「${key}」を展開しました`);
+        break;
+      }
+    }
+  }
+  if (cfg && typeof cfg === "object" && Array.isArray(cfg.gates)) {
+    cfg.gates = cfg.gates.map((g, i) => {
+      const gate = { ...g };
+      if (gate.parameters && typeof gate.parameters === "object") {
+        for (const key of ["theta", "phi", "strength"]) if (gate[key] === undefined && gate.parameters[key] !== undefined) gate[key] = gate.parameters[key];
+        delete gate.parameters;
+        repairs.push(`ゲート${i + 1}: parameters を直下に引き上げました`);
+      }
+      if (!gate.name && (gate.gate_id || gate.id)) {
+        gate.name = gate.gate_id || gate.id;
+        repairs.push(`ゲート${i + 1}: ${gate.gate_id ? "gate_id" : "id"} を name として使用しました`);
+      }
+      for (const key of ["theta", "phi", "strength"]) {
+        if (typeof gate[key] === "string" && gate[key].trim() !== "" && Number.isFinite(Number(gate[key]))) {
+          gate[key] = Number(gate[key]);
+          repairs.push(`ゲート${i + 1}: ${key} を数値に変換しました`);
+        }
+      }
+      return gate;
+    });
+  }
+  return { config: cfg, repairs };
+}
+
+export function makeAiInterpretationJson(result, audit = {}) {
+  const diagnosticSections = {
+    gate_trace: Array.isArray(audit.gate_trace) ? audit.gate_trace : null,
+    ablation: Array.isArray(audit.ablation) ? audit.ablation : null,
+    order_sensitivity: Array.isArray(audit.order_sensitivity) ? audit.order_sensitivity : null,
+    phase_sensitivity: Array.isArray(audit.phase_sensitivity) ? audit.phase_sensitivity : null,
+    gate_resonance: Array.isArray(audit.gate_resonance) ? audit.gate_resonance : null,
+    gate_flow: Array.isArray(audit.gate_flow) ? audit.gate_flow : null,
+  };
+  const sectionsPresent = Object.fromEntries(Object.entries(diagnosticSections).map(([key, value]) => [key, value !== null]));
+  return {
+    input_type: "measurement_result",
+    schema_version: "ai_interpretation_12t_v1",
+    name: result.name,
+    description: result.description,
+    mode_profile: result.mode_profile,
+    source_text_summary: result.source_text_summary ?? "",
+    component_meanings: result.component_meanings ?? {},
+    life_question: result.life_question,
+    expected_reading_full: result.expected_reading_full,
+    gates_summary: result.gates_summary,
+    gate_resonance: Array.isArray(audit.gate_resonance) ? audit.gate_resonance : null,
+    gate_flow: Array.isArray(audit.gate_flow) ? audit.gate_flow : null,
+    encoding_health: audit.encoding_health ?? null,
+    merge_count: audit.merge_count ?? 0,
+    merge_warning: audit.merge_warning ?? false,
+    salvage_repairs: audit.salvage_repairs ?? [],
+    tensor_structure: result.tensor_structure,
+    entanglement12: result.entanglement12,
+    projected_2bit: result.projected_2bit,
+    classical_controls: result.classical_controls,
+    probability_source: result.probability_source,
+    count_source: result.count_source,
+    shots: result.shots,
+    seed: result.seed,
+    probabilities: result.probabilities,
+    sampled_counts: result.sampled_counts,
+    sampled_probabilities: result.sampled_probabilities,
+    observed_ranking_from_probabilities: result.observed_ranking_from_probabilities,
+    observed_ranking_from_counts: result.observed_ranking_from_counts,
+    expected_ranking: result.expected_ranking,
+    ranking_match_expected_from_probabilities: result.ranking_match_expected_from_probabilities,
+    ranking_match_expected_from_counts: result.ranking_match_expected_from_counts,
+    ranking_match_top3: result.ranking_match_top3,
+    sections_present: sectionsPresent,
+    ...Object.fromEntries(Object.entries(diagnosticSections).filter(([, value]) => value !== null)),
+    anti_hallucination_instructions: [
+      "Do not invent probabilities, counts, rankings, L1 distances, gate effects, or sensitivities.",
+      "Use only values present in this JSON.",
+      "expected_ranking is a hypothesis, not an observed result.",
+      "probabilities and sampled_probabilities are different fields.",
+      "If a section is absent, say 入力なし.",
+      "binding_label / axis_entropies_bits / axis_binding_normalized / deepest_bound_axis / time_populations / presence_spectrum / projected_2bit はサイトが計算した値である。再計算・再分類しない。deepest_bound_axis はサイトが正規化値で判定した結果である。axis_entropies_bits の生の大小から再判定しない。",
+      "merge_count / merge_warning はサイトの合流監査である。merge_warning が true の場合、位相・干渉に関する診断は判定不能と明示する。",
+      "phase_dependence_level / interference_gap_level はサイトの閾値判定であり、AIが独自の閾値で再判定しない。",
+      "phase_dependence と interference_gap が両方 LOW の場合、『この物語の量子的構造(位相・干渉)は結果に寄与していない』と明示的に述べること。",
+      "gate_resonance の resonance_label と resonance_ratio はサイトが計算した値である。AIが即時効果と反実仮想重みから独自にラベルを再判定しない。",
+      "gates_summary の meaning と phi_label はエンコーダとサイトが付与した意味情報である。存在しないゲートや意味を創作しない。",
+      "gate_flow の flag と encoding_health はサイトの判定である。NO_OP / SOURCE_EMPTY のゲートの meaning を根拠に構造的主張を組み立てない。",
+    ],
+    safety_notice: "この結果は霊的真実・医学的事実・人生診断を証明するものではなく、象徴回路の出力を自己理解のために読むものです。",
   };
 }
 
@@ -468,11 +455,7 @@ function axisPopulations(values) {
 
 function projected2bit(values) {
   const projected = Object.fromEntries(["a", "b", "c", "d"].map((label) => [label, values[`${label}0`] + values[`${label}1`] + values[`${label}2`]]));
-  return {
-    probabilities: projected,
-    ranking: Object.entries(projected).sort((left, right) => right[1] - left[1]).map(([label]) => label),
-    note: "時間軸を周辺化した2ビット視点。",
-  };
+  return { probabilities: projected, ranking: Object.entries(projected).sort((left, right) => right[1] - left[1]).map(([label]) => label), note: "時間軸を周辺化した2ビット視点。" };
 }
 
 export function runClassicalMarkov(config) {
@@ -491,9 +474,7 @@ export function runClassicalMarkov(config) {
   return Object.fromEntries(BASIS.map((label, k) => [label, p[k]]));
 }
 
-function l1Distance(left, right) {
-  return BASIS.reduce((sum, label) => sum + Math.abs(left[label] - right[label]), 0);
-}
+function l1Distance(left, right) { return BASIS.reduce((sum, label) => sum + Math.abs(left[label] - right[label]), 0); }
 
 export function runClassicalControls(config, quantumProbabilities) {
   const phiZeroGates = config.gates.map((gate) => ({ ...gate, phi: 0 }));
@@ -514,11 +495,7 @@ export function runClassicalControls(config, quantumProbabilities) {
 
 export function phiLabel(phi) {
   const wrapped = Math.atan2(Math.sin(phi), Math.cos(phi));
-  const candidates = [
-    [0, "同位相(受容・同調)"],
-    [Math.PI / 2, "直交(葛藤・未統合)"],
-    [-Math.PI / 2, "折返し(反転的気づき)"],
-  ];
+  const candidates = [[0, "同位相(受容・同調)"], [Math.PI / 2, "直交(葛藤・未統合)"], [-Math.PI / 2, "折返し(反転的気づき)"]];
   let best = ["逆位相(反転・拒絶)", Math.min(Math.abs(wrapped - Math.PI), Math.abs(wrapped + Math.PI))];
   for (const [anchor, label] of candidates) {
     const distance = Math.abs(wrapped - anchor);
@@ -533,9 +510,8 @@ export function computeGateResonance(gateTrace, ablation, gatesSummary) {
     const weight = ablation[index].l1_difference;
     let ratio = null;
     let label;
-    if (immediate < 0.02) {
-      label = weight >= 0.1 ? "DORMANT_BUT_STRUCTURAL" : "NEGLIGIBLE";
-    } else {
+    if (immediate < 0.02) label = weight >= 0.1 ? "DORMANT_BUT_STRUCTURAL" : "NEGLIGIBLE";
+    else {
       ratio = weight / immediate;
       if (weight < 0.15) label = "MINOR";
       else if (ratio >= 1.5 && immediate < 0.4) label = "QUIET_SEED";
@@ -543,14 +519,7 @@ export function computeGateResonance(gateTrace, ablation, gatesSummary) {
       else if (ratio <= 0.6 && immediate >= 0.2) label = "WASHED_OUT";
       else label = "PROPORTIONATE";
     }
-    return {
-      gate: step.gate,
-      meaning: gatesSummary[index]?.meaning ?? "",
-      immediate_effect: immediate,
-      counterfactual_weight: weight,
-      resonance_ratio: ratio,
-      resonance_label: label,
-    };
+    return { gate: step.gate, meaning: gatesSummary[index]?.meaning ?? "", immediate_effect: immediate, counterfactual_weight: weight, resonance_ratio: ratio, resonance_label: label };
   });
 }
 
@@ -567,6 +536,7 @@ export function computeGateFlow(gateTrace, gatesSummary) {
       meaning: gatesSummary[index]?.meaning ?? "",
       source_population_before: srcBefore,
       target_population_before: tgtBefore,
+      is_merge: srcBefore > 1e-6 && tgtBefore > 1e-6,
       flag,
     };
   });
@@ -585,16 +555,12 @@ export function runFullMeasurement(config) {
   const finalState = applyGates(start, config.gates);
   const finalProbabilities = probabilities(finalState);
   const ranking = rankComponents(finalProbabilities);
-  const expectedRanking = Array.isArray(config.expected_reading?.ranking)
-    ? config.expected_reading.ranking
-    : [config.expected_reading?.primary, config.expected_reading?.secondary].filter(Boolean);
+  const expectedRanking = Array.isArray(config.expected_reading?.ranking) ? config.expected_reading.ranking : [config.expected_reading?.primary, config.expected_reading?.secondary].filter(Boolean);
   const sampledCounts = config.shots ? sampleCounts(finalProbabilities, config.shots, config.seed ?? 0) : null;
   const sampledProbabilities = probabilitiesFromCounts(sampledCounts, config.shots);
   const rankingFromCounts = sampledCounts ? rankComponents(sampledCounts) : null;
   const expectedMatch = rankingMatchesExpected(ranking, expectedRanking);
-  const expectedMatchFromCounts = rankingFromCounts
-    ? rankingMatchesExpected(rankingFromCounts, expectedRanking)
-    : null;
+  const expectedMatchFromCounts = rankingFromCounts ? rankingMatchesExpected(rankingFromCounts, expectedRanking) : null;
   const componentPhases = phases(finalState);
   const entanglement12 = analyzeEntanglement12(finalState);
   entanglement12.axis_populations = axisPopulations(finalProbabilities);
@@ -603,6 +569,7 @@ export function runFullMeasurement(config) {
   const profile = config.mode_profile === "seeker" ? "seeker" : "general";
   const result = {
     schema_version: "12t-1.0",
+    engine_version: "12t-1.1",
     name: config.name ?? "unnamed",
     description: config.description ?? "",
     mode_profile: profile,
@@ -610,15 +577,7 @@ export function runFullMeasurement(config) {
     mode: config.mode ?? "process",
     initial: config.initial,
     basis: BASIS,
-    tensor_structure: {
-      profile,
-      subject_axis: AXIS_LABELS[profile].subject_axis,
-      manifestation_axis: AXIS_LABELS[profile].manifestation_axis,
-      time_axis: AXIS_LABELS[profile].time_axis,
-      component_labels: AXIS_LABELS[profile].components,
-      component_definitions: AXIS_LABELS[profile].definitions,
-      mixed_radix_mapping: "index = 6*q1 + 3*q2 + t3",
-    },
+    tensor_structure: { profile, subject_axis: AXIS_LABELS[profile].subject_axis, manifestation_axis: AXIS_LABELS[profile].manifestation_axis, time_axis: AXIS_LABELS[profile].time_axis, component_labels: AXIS_LABELS[profile].components, component_definitions: AXIS_LABELS[profile].definitions, mixed_radix_mapping: "index = 6*q1 + 3*q2 + t3" },
     entanglement12,
     projected_2bit: projected,
     classical_controls: classicalControls,
@@ -640,44 +599,30 @@ export function runFullMeasurement(config) {
     sampled_probabilities: sampledProbabilities,
     final_statevector: Object.fromEntries(BASIS.map((label, index) => [label, finalState[index]])),
     norm: finalState.reduce((sum, z) => sum + abs2(z), 0),
-    phases: Object.fromEntries(BASIS.map((label) => [label, {
-      radians: componentPhases[label],
-      degrees: componentPhases[label] === null ? null : componentPhases[label] * 180 / Math.PI,
-    }])),
-    relative_phases: Object.fromEntries(Object.entries(relativePhases(finalState)).map(([key, radians]) => [key, {
-      radians,
-      degrees: radians === null ? null : radians * 180 / Math.PI,
-    }])),
+    phases: Object.fromEntries(BASIS.map((label) => [label, { radians: componentPhases[label], degrees: componentPhases[label] === null ? null : componentPhases[label] * 180 / Math.PI }])),
+    relative_phases: Object.fromEntries(Object.entries(relativePhases(finalState)).map(([key, radians]) => [key, { radians, degrees: radians === null ? null : radians * 180 / Math.PI }])),
     alignment: alignmentScores(finalState),
     component_meanings: config.component_meanings ?? {},
     life_question: typeof config.life_question === "string" ? config.life_question : null,
-    expected_reading_full: {
-      ranking: expectedRanking,
-      pattern: config.expected_reading?.pattern ?? null,
-      notes: config.expected_reading?.notes ?? null,
-    },
-    gates_summary: config.gates.map((gate) => ({
-      name: gate.name,
-      source: gate.source,
-      target: gate.target,
-      strength: gate.strength,
-      theta: gate.theta,
-      phi: gate.phi,
-      phi_label: phiLabel(gate.phi),
-      meaning: typeof gate.meaning === "string" ? gate.meaning : "",
-    })),
+    expected_reading_full: { ranking: expectedRanking, pattern: config.expected_reading?.pattern ?? null, notes: config.expected_reading?.notes ?? null },
+    gates_summary: config.gates.map((gate) => ({ name: gate.name, source: gate.source, target: gate.target, strength: gate.strength, theta: gate.theta, phi: gate.phi, phi_label: phiLabel(gate.phi), meaning: typeof gate.meaning === "string" ? gate.meaning : "" })),
   };
   const auditGateTrace = traceGateEffects(start, config.gates);
   const auditAblation = runGateAblation(config);
   const gateResonance = computeGateResonance(auditGateTrace, auditAblation, result.gates_summary);
   const gateFlow = computeGateFlow(auditGateTrace, result.gates_summary);
+  const mergeCount = gateFlow.filter((gate) => gate.is_merge).length;
   const audit = {
     schema_version: "12t-1.0",
+    engine_version: "12t-1.1",
+    salvage_repairs: config.__salvage_repairs ?? [],
     measurement: result,
     gate_trace: auditGateTrace,
     ablation: auditAblation,
     gate_resonance: gateResonance,
     gate_flow: gateFlow,
+    merge_count: mergeCount,
+    merge_warning: mergeCount === 0,
     encoding_health: encodingHealth(gateFlow),
     order_sensitivity: runOrderSensitivity(config),
     phase_sensitivity: runPhaseSensitivity(config),
