@@ -34,6 +34,8 @@ JSON構造の掟:
 - source と target は必ず a0,a1,a2,b0,b1,b2,c0,c1,c2,d0,d1,d2 のいずれかを文字列で書く。
 - expected_reading は必ずオブジェクトにし、ranking と summary を含める。トップレベルに ranking を置かない。
 - encoder_notes には schema_check, flow_check, merge_check, measurement_boundary を含める。
+- merge_check は配列。各要素は gate/source/target/source_previously_reached_by/target_previously_reached_by/reason を含める。
+- 合流点M箇所のMは merge_check 配列の要素数と一致させる。
 
 schema_versionは"12t-1.0"、mode_profileは"${mode}"。expected_reading.rankingは${JSON.stringify(BASIS)}の全要素を一度ずつ含める。有効なJSONだけを出力する。`;
 
