@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "mode_profile": "general",
+  "name": "midlife_reboot_general_v0",
+  "description": "子育てが一段落した51歳女性が、家族の役割を大切にしながら人生後半の学びと個人としての願いを現実に戻していく過程",
+  "source_text": "51歳の女性。長く妻と母として家族を優先し、家事と子育てを中心に生活してきた。子どもの独立が近づき、自分個人として何をしたいのか分からなくなっている。学び直しへの関心はあるが、年齢や体力、将来の介護、夫との生活との両立に不安がある。これまで家族のために生きてきた時間を否定せず、人生後半に自分の願いをどう取り戻すか考えたい。",
+  "mode": "process",
+  "initial": "b",
+  "shots": 4096,
+  "seed": 510,
+  "expected_reading": {
+    "primary": "a",
+    "secondary": "b",
+    "ranking": ["a", "b", "c", "d"],
+    "pattern": "役割の節目から内的核を再発見し、現実生活へ戻す人生後半の再起動型",
+    "notes": "母・妻としての現実相 b から、未発現の自己 a が葛藤を伴って立ち上がる。人生の意味 c と家族環境 d がその再起動を支えるという仮説。"
+  },
+  "component_meanings": {
+    "a": "母親や妻という役割の奥にしまい込まれていた、個人としての願い・学びたい気持ち・未発現の自己",
+    "b": "妻・母・生活者としての現実、家事、年齢、体力、介護不安、夫や家族との日常",
+    "c": "家族のために生きてきた人生の意味、人生後半の価値観、これまでの選択をどう意味づけるかという背後秩序",
+    "d": "子育て終了という節目、夫・子ども・家族環境、今後の転機や外から来る支え"
+  },
+  "gates": [
+    {
+      "name": "G_ab_role_life_awakens_inner_core",
+      "source": "b",
+      "target": "a",
+      "strength": 4,
+      "theta": 1.2566370614,
+      "phi": 1.5707963268,
+      "meaning": "母・妻としての役割が一段落したことで、奥にしまい込んでいた個人としての願い a が葛藤を伴って立ち上がる"
+    },
+    {
+      "name": "G_ab_inner_core_returns_to_life",
+      "source": "a",
+      "target": "b",
+      "strength": 3,
+      "theta": 0.9424777961,
+      "phi": 0,
+      "meaning": "個人としての願い a を、実際の生活 b の中でどう扱うかを考え始める"
+    },
+    {
+      "name": "G_bc_life_review_meaning",
+      "source": "b",
+      "target": "c",
+      "strength": 3,
+      "theta": 0.9424777961,
+      "phi": 1.5707963268,
+      "meaning": "現実生活 b を振り返ることで、家族のために生きた人生の意味 c が問いとして立ち上がる"
+    },
+    {
+      "name": "G_ca_meaning_supports_inner_core",
+      "source": "c",
+      "target": "a",
+      "strength": 2,
+      "theta": 0.6283185307,
+      "phi": 0,
+      "meaning": "人生の意味づけ c が、個人としての願い a を支え直す"
+    },
+    {
+      "name": "G_bd_family_environment_support",
+      "source": "b",
+      "target": "d",
+      "strength": 2,
+      "theta": 0.6283185307,
+      "phi": 0,
+      "meaning": "夫・子ども・家族環境 d が、現実生活 b に具体的な支えや節目として作用している"
+    }
+  ],
+  "encoder_notes": {
+    "assumptions": ["学び直しへの関心を、未発現の内的核 a の主要な表現として扱う"],
+    "uncertainties": ["夫や家族から得られる具体的支援の程度は本文だけでは確定しない"],
+    "questions_if_refining": ["現在もっとも学びたいことは何か", "家族と自分の時間についてどのような対話をしているか"]
+  }
+}

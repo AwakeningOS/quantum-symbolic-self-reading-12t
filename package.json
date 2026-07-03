@@ -1,0 +1,8 @@
+{
+  "name": "quantum-symbolic-self-reading-12t",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/node_test.mjs"
+  }
+}

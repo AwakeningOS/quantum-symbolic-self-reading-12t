@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="人生・思想・霊的体験を2×2×3・12状態の象徴回路としてブラウザ内で測定する実験的ツール。">
+  <meta name="theme-color" content="#101629">
+  <title>Quantum Life & Story Circuit Analysis 12T</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="shell hero-grid">
+      <div>
+        <p class="eyebrow">Private · Local · Symbolic</p>
+        <h1>人生・物語<br>12状態回路<br>分析システム</h1>
+        <p class="english-title">Quantum Life & Story Circuit Analysis 12T</p>
+        <p class="lead">当事と世界、潜在と顕在、過去・現在・未来。<br>2×2×3の12成分が干渉する物語の構造を量子回路（シミュレーション）で計算します。</p>
+      </div>
+      <div class="orb" aria-hidden="true"><span>a0</span><span>b1</span><span>c0</span><span>d1</span></div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="notice privacy" aria-labelledby="privacy-title">
+      <p class="section-kicker">PRIVACY</p>
+      <h2 id="privacy-title">入力は、この端末から出ません</h2>
+      <p>このサイトは入力内容をサーバーに送信しません。すべての計算はブラウザ内で行われます。ただし、あなたが外部AIに入力した内容は、そのAIサービス側の規約に従います。</p>
+    </section>
+
+    <section class="notice warning" aria-labelledby="safety-title">
+      <p class="section-kicker">SAFETY NOTICE</p>
+      <h2 id="safety-title">象徴的な自己理解のためのツールです</h2>
+      <p>この結果は、霊的真実・医学的事実・人生の絶対診断を証明するものではありません。AIが作った象徴的な回路設定を、数学的に展開した結果です。自己理解・内省・物語の整理のために使ってください。医療・宗教・人生判断の絶対的根拠にはしないでください。</p>
+    </section>
+
+    <section class="section mode-section" id="mode-selection">
+      <p class="section-kicker">CHOOSE MODE</p>
+      <h2>まず、測定したい事柄に合うモードを選んでください。</h2>
+      <div class="mode-grid" role="radiogroup" aria-label="読み方のモード">
+        <label class="mode-card">
+          <input type="radio" name="mode-profile" value="general" checked>
+          <span class="mode-card-body">
+            <span class="mode-status">DEFAULT</span>
+            <strong>非スピリチュアル・人生・恋愛モード</strong>
+            <span>人生・創作・思想・キャリア・恋愛などを、当事/世界・潜在/顕在・過去/現在/未来の3軸で読みます。</span>
+            <span class="mode-components">淵源・胸中・志向 / 来歴・所作・企図 / 慣性・気運・胎動 / 帰結・眼前・予兆</span>
+          </span>
+        </label>
+        <label class="mode-card">
+          <input type="radio" name="mode-profile" value="seeker">
+          <span class="mode-card-body">
+            <span class="mode-status">SEEKER</span>
+            <strong>スピリチュアル・霊的体験・求道者モード</strong>
+            <span>霊的体験・信仰・求道の過程を、個我/超越・非顕現/顕現・過去/現在/未来の3軸で読みます。</span>
+            <span class="mode-components">宿縁・観照・召命 / 遍歴・行持・新生 / 伝灯・臨在・黎明 / 加護・示現・来迎</span>
+          </span>
+        </label>
+      </div>
+    </section>
+
+    <section class="section" id="how-to">
+      <p class="section-kicker">HOW IT WORKS</p>
+      <h2>3つのステップ</h2>
+      <div class="steps">
+        <article class="step-card">
+          <span class="step-number">01</span>
+          <h3>分析したい内容を書く</h3>
+          <p>モードを選んでから内容記入欄に書いてください。「AI変換プロンプト+記入内容をコピー」ボタンを押すと、プロンプトと本文がまとめてコピーされます。それを普段使っているAIに貼り付けてください。</p>
+        </article>
+        <article class="step-card">
+          <span class="step-number">02</span>
+          <h3>AIが出力した結果を貼付欄に貼る</h3>
+          <p>AIが出力した変換結果を、貼付欄に貼ってください。測定ボタンを押すと、ブラウザ内で量子回路（シミュレーション）が計算します。</p>
+        </article>
+        <article class="step-card">
+          <span class="step-number">03</span>
+          <h3>結果と解釈プロンプトをAIに渡し解読してもらう</h3>
+          <p>分析後に「AI解釈プロンプト+結果をコピー」ボタンを押してコピーし、お使いのAIに貼り付けて下さい。AIが解読し解説してくれます。わかりにくい場合はAIに質問しましょう。</p>
+        </article>
+      </div>
+    </section>
+
+    <pre id="encoding-prompt" class="prompt" hidden></pre>
+    <button id="encoder-copy-button" type="button" data-copy-prompt="encoding" hidden></button>
+    <pre id="interpretation-prompt" class="prompt" hidden></pre>
+    <button id="copy-result" type="button" hidden></button>
+    <button id="copy-audit" type="button" hidden></button>
+    <button id="copy-ai-json" type="button" hidden></button>
+    <button id="download-result" type="button" hidden></button>
+    <button id="download-audit" type="button" hidden></button>
+    <button id="download-ai-json" type="button" hidden></button>
+
+    <section class="section input-section" id="story-entry">
+      <p class="section-kicker">STEP 01 · WRITE YOUR STORY</p>
+      <h2>分析したい内容を入力</h2>
+      <p>ここに分析したい人生・物語・思想・体験などを書き込んで下さい。</p>
+      <div class="measurement-warning">
+        <strong>AI変換の品質について</strong>
+        <p>使用するAIの性能によって、記入内容を量子回路用JSONへ変換する精度と結果の解釈・解説の品質が変わります。</p>
+      </div>
+      <label class="sr-only" for="story-input">分析したい人生・物語・思想・体験など</label>
+      <textarea class="story-input" id="story-input" spellcheck="true" placeholder="ここに分析したい人生・物語・思想・体験などを書き込んで下さい。
+
+書くとよいこと：
+・出来事の順番
+・昔から続いている傷、習慣、価値観
+・今の現実、仕事、恋愛、家族、身体の状態
+・外から来た出来事、出会い、喪失、チャンス
+・まだ形になっていない本音や願い
+・これから向かいたい理想
+・過去から未来へ向き直った瞬間
+・複数の出来事や感情が一つに重なった場面
+
+霊的体験・信仰・求道モードで書く場合：
+・体験前はどんな生き方をしていたか
+・どんな苦しみ、迷い、願いがあったか
+・何がきっかけになったか
+・心に残った言葉、本、人、祈り、場所、出来事
+・特別な体験があれば、その内容
+・特別な体験がなくても、価値観が変わった出来事
+・その後、心や生活がどう変わったか
+・今も残っている迷い、希望、問い
+小さな違和感、救われた感覚、考え方の変化などあれば書いてください。"></textarea>
+      <div class="button-row">
+        <button class="button primary" id="copy-encoder-with-story" type="button">非スピリチュアル・人生・恋愛モードのAI変換用プロンプト+記入内容をコピー</button>
+      </div>
+      <p class="data-source-note" id="story-copy-status" aria-live="polite"></p>
+    </section>
+
+    <section class="section input-section" id="measurement">
+      <p class="section-kicker">STEP 02 · MEASURE</p>
+      <h2>AIの変換結果を貼り付ける</h2>
+
+      <label class="sr-only" for="config-input">config JSON</label>
+      <textarea id="config-input" spellcheck="false" placeholder="ここにAIが出力した量子回路用JSON を貼ってください。"></textarea>
+      <div id="error-message" class="error" role="alert" tabindex="-1" hidden></div>
+      <div class="button-row">
+        <button class="button primary" id="measure-button" type="button">測定する</button>
+        <button class="button ghost" id="clear-button" type="button">入力をクリア</button>
+      </div>
+
+    </section>
+
+    <section class="section results-section" id="results" hidden>
+      <p class="section-kicker">MEASUREMENT RESULT</p>
+      <h2>測定結果</h2>
+      <div class="copy-panel">
+        <p class="recommended-label">RECOMMENDED</p>
+        <h3>量子計算結果をAIへ渡し解析・解説してもらって下さい</h3>
+        <button class="button primary recommended-action" id="copy-prompt-ai" type="button">AI解析用プロンプト + 量子計算結果をコピー</button>
+      </div>
+      <div id="result-content"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-inner">
+      <p>Quantum Symbolic Self-Reading 12T</p>
+      <p>No API · No server · No storage</p>
+    </div>
+  </footer>
+  <script type="module" src="./src/ui.js"></script>
+</body>
+</html>

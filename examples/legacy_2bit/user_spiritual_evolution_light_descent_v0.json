@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "mode_profile": "seeker",
+  "name": "user_spiritual_evolution_light_descent_v0",
+  "description": "ユーザー本人の霊的プロセスを、本能的生活から真理探究、病苦、救済希求、光体験、そして現在の現実生活への再下降として測定する",
+  "source_text": "動物のように本能に導かれるまま生きていた。\nホーキンズ博士の本に出会った。\nそこから生命の真実・霊的叡智を探し出した。\n皮膚病が悪化した。\n苦しみの中で救済を願った。\n強烈な慈愛と平安の感覚を伴い、生命の真実の叡智を伴った光の体験をして、神の愛を悟った。\nしかし現在は、引きこもり的生活をしている。",
+  "life_question": "光を知った自分は、なぜ今この生活をしているのか",
+  "mode": "process",
+  "initial": "b",
+  "shots": 4096,
+  "seed": 905,
+  "expected_reading": {
+    "primary": "b",
+    "secondary": "a",
+    "ranking": ["b", "a", "d", "c"],
+    "pattern": "真理探究・病苦・光体験から現実再下降する霊的進化型",
+    "notes": "光体験そのものではなく、現在の引きこもり的生活まで含めた全体プロセスとして読む。b は光体験前の本能的自己だけでなく、光体験後に身体・病・生活・孤独へ戻ってきている現在地を表す。a は光体験で変容した魂的自己、d は神の愛・慈愛・平安・救済の光、c は生命の真実・霊的叡智を表す。"
+  },
+  "component_meanings": {
+    "a": "光体験で変容した魂的自己",
+    "b": "身体・病・本能・生活・引きこもり的現実自己",
+    "c": "生命の真実・霊的叡智",
+    "d": "神の愛・慈愛・平安・救済の光"
+  },
+  "gates": [
+    {
+      "name": "G_bc_hawkins_truth_reaches_self",
+      "source": "c",
+      "target": "b",
+      "theta": 1.2566370614,
+      "phi": 0.0,
+      "strength": 4.0,
+      "meaning": "ホーキンズ博士の本を通じて、生命の真実・霊的叡智 c が現実自己 b に強く届いた"
+    },
+    {
+      "name": "G_bc_truth_seeking",
+      "source": "b",
+      "target": "c",
+      "theta": 0.9424777961,
+      "phi": 0.0,
+      "strength": 3.0,
+      "meaning": "現実自己 b が、ホーキンズ博士の本との出会いをきっかけに、生命の真実・霊的叡智 c を探し始めた"
+    },
+    {
+      "name": "G_bd_suffering_seeks_salvation",
+      "source": "b",
+      "target": "d",
+      "theta": 0.7853981634,
+      "phi": 1.5707963268,
+      "strength": 2.5,
+      "meaning": "皮膚病の悪化と苦しみの中で、現実自己 b が神の救済・慈愛・光 d を求める。ただし平安な帰依ではなく、苦痛と切実さを伴うため直交位相とする"
+    },
+    {
+      "name": "G_ad_light_experience_transforms_soul",
+      "source": "d",
+      "target": "a",
+      "theta": 1.5707963268,
+      "phi": 0.0,
+      "strength": 5.0,
+      "meaning": "神の愛・慈愛・平安・救済の光 d が、魂的自己 a を最大級に変容させる"
+    },
+    {
+      "name": "G_cd_light_reveals_wisdom",
+      "source": "d",
+      "target": "c",
+      "theta": 1.2566370614,
+      "phi": 0.0,
+      "strength": 4.0,
+      "meaning": "神の愛・慈愛・平安の光 d が、生命の真実・叡智 c を開示する"
+    },
+    {
+      "name": "G_ab_return_to_embodied_life",
+      "source": "a",
+      "target": "b",
+      "theta": 1.2566370614,
+      "phi": 1.5707963268,
+      "strength": 4.0,
+      "meaning": "光体験で変容した魂的自己 a が、身体・病・孤独・引きこもり的現実 b に戻る。ただし完全統合ではなく、未統合の戻りとして扱う"
+    },
+    {
+      "name": "G_bd_faint_love_resonance_in_current_life",
+      "source": "d",
+      "target": "b",
+      "theta": 0.3141592654,
+      "phi": 0.0,
+      "strength": 1.0,
+      "meaning": "神の愛・慈愛・平安 d は、現在の身体・病・引きこもり的現実 b を強く包んでいるわけではないが、かすかな残響として残っている"
+    }
+  ]
+}
