@@ -2,6 +2,8 @@
 
 人生・物語・思想・霊的体験を、`qubit × qubit × qutrit = 2×2×3` の12状態へ構造化して読む、ブラウザ内完結の象徴回路シミュレーターです。
 
+https://awakeningos.github.io/quantum-symbolic-self-reading-12t/
+
 ## 位置づけ
 
 12Tは[3Q](https://github.com/AwakeningOS/quantum-symbolic-self-reading-3q)の置き換えではなく、姉妹リポジトリです。
